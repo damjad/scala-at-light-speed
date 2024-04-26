@@ -1,5 +1,6 @@
 package com.rockthejvm
 
+import java.lang.RuntimeException
 import scala.concurrent.Future
 import scala.util.{Failure, Success, Try}
 import scala.concurrent.ExecutionContext.Implicits.global
@@ -7,7 +8,7 @@ import scala.concurrent.ExecutionContext.Implicits.global
 object Advanced extends App {
 
   /**
-    lazy evaluation
+   * lazy evaluation
    */
   lazy val aLazyValue = 2
   lazy val lazyValueWithSideEffect = {
@@ -19,9 +20,10 @@ object Advanced extends App {
   // useful in infinite collections
 
   /**
-    "pseudo-collections": Option, Try
+   * "pseudo-collections": Option, Try
    */
   def methodWhichCanReturnNull(): String = "hello, Scala"
+
   val anOption = Option(methodWhichCanReturnNull()) // Some("hello, Scala")
   // option = "collection" which contains at most one element: Some(value) or None
 
@@ -31,6 +33,7 @@ object Advanced extends App {
   }
 
   def methodWhichCanThrowException(): String = throw new RuntimeException
+
   val aTry = Try(methodWhichCanThrowException())
   // a try = "collection" with either a value if the code went well, or an exception if the code threw one
 
@@ -38,34 +41,59 @@ object Advanced extends App {
     case Success(validValue) => s"I have obtained a valid string: $validValue"
     case Failure(ex) => s"I have obtained an exception: $ex"
   }
+
+  var anotherStringProcessingException = aTry match {
+    case Success(validValue) => s"I have obtained a valid string: $validValue"
+    case Failure(ex) =>
+      ex match {
+        case ex: NullPointerException => s"I have obtained a NullPointer exception: $ex"
+        case _ => s"I have obtained an exception: $ex"
+      }
+  }
+
+  println(anotherStringProcessingException)
+
+  anotherStringProcessingException = aTry match {
+    case Success(validValue) => s"I have obtained a valid string: $validValue"
+    case Failure(ex: NullPointerException) => s"I have obtained a NullPointerException: $ex"
+    case Failure(ex) => s"I have obtained an exception: $ex"
+  }
+
+
+  println(anotherStringProcessingException)
   // map, flatMap, filter
 
 
   /**
-    * Evaluate something on another thread
-    * (asynchronous programming)
-    */
+   * Evaluate something on another thread
+   * (asynchronous programming)
+   */
   val aFuture = Future {
     println("Loading...")
     Thread.sleep(1000)
     println("I have computed a value.")
     67
   }
+  Thread.sleep(2000)
+  println(aFuture)
 
   // future is a "collection" which contains a value when it's evaluated
   // future is composable with map, flatMap and filter
 
   /**
-    * Implicits basics
-    */
+   * Implicits basics
+   */
   // #1: implicit arguments
   def aMethodWithImplicitArgs(implicit arg: Int) = arg + 1
-  implicit val myImplicitInt = 46
-  println(aMethodWithImplicitArgs)  // aMethodWithImplicitArgs(myImplicitInt)
+
+  implicit val myImplicitInt: Int = 46
+  println(aMethodWithImplicitArgs) // aMethodWithImplicitArgs(myImplicitInt)
+
+  println(aMethodWithImplicitArgs(34))
 
   // #2: implicit conversions
   implicit class MyRichInteger(n: Int) {
-    def isEven() = n % 2 == 0
+    def isEven(): Boolean = n % 2 == 0
   }
 
   println(23.isEven()) // new MyRichInteger(23).isEven()
